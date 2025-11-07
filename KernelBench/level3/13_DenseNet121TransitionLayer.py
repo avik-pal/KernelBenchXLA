@@ -2,6 +2,7 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 
+
 class Model(nn.Module):
     def __init__(self, num_input_features: int, num_output_features: int):
         """
@@ -12,8 +13,10 @@ class Model(nn.Module):
         self.transition = nn.Sequential(
             nn.BatchNorm2d(num_input_features),
             nn.ReLU(inplace=True),
-            nn.Conv2d(num_input_features, num_output_features, kernel_size=1, bias=False),
-            nn.AvgPool2d(kernel_size=2, stride=2)
+            nn.Conv2d(
+                num_input_features, num_output_features, kernel_size=1, bias=False
+            ),
+            nn.AvgPool2d(kernel_size=2, stride=2),
         )
 
     def forward(self, x):
@@ -23,13 +26,16 @@ class Model(nn.Module):
         """
         return self.transition(x)
 
+
 batch_size = 128
 num_input_features = 32
 num_output_features = 64
 height, width = 256, 256
 
+
 def get_inputs():
     return [torch.rand(batch_size, num_input_features, height, width)]
+
 
 def get_init_inputs():
     return [num_input_features, num_output_features]

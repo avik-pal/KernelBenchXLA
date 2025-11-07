@@ -1,10 +1,12 @@
 import torch
 import torch.nn as nn
 
+
 class Model(nn.Module):
     """
     Simple model that performs 3D Average Pooling.
     """
+
     def __init__(self, kernel_size: int, stride: int = None, padding: int = 0):
         """
         Initializes the Average Pooling layer.
@@ -15,7 +17,9 @@ class Model(nn.Module):
             padding (int, optional): Padding to apply before pooling. Defaults to 0.
         """
         super(Model, self).__init__()
-        self.avg_pool = nn.AvgPool3d(kernel_size=kernel_size, stride=stride, padding=padding)
+        self.avg_pool = nn.AvgPool3d(
+            kernel_size=kernel_size, stride=stride, padding=padding
+        )
 
     def forward(self, x: torch.Tensor) -> torch.Tensor:
         """
@@ -29,6 +33,7 @@ class Model(nn.Module):
         """
         return self.avg_pool(x)
 
+
 batch_size = 16
 channels = 32
 depth = 128
@@ -38,9 +43,11 @@ kernel_size = 3
 stride = 2
 padding = 1
 
+
 def get_inputs():
     x = torch.rand(batch_size, channels, depth, height, width)
     return [x]
+
 
 def get_init_inputs():
     return [kernel_size, stride, padding]

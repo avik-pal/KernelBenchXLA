@@ -1,4 +1,3 @@
-
 import pytest
 from src.dataset import get_code_hash
 
@@ -21,7 +20,7 @@ def test_get_code_hash():
     '''
     B = 1
     """
-    
+
     code_snippet_batch_1_v2 = """
     import torch 
     '''
@@ -41,8 +40,10 @@ def test_get_code_hash():
     B = 64
     """
 
-    assert get_code_hash(code_snippet_batch_1_v1) == get_code_hash(code_snippet_batch_1_v2), \
-        "Hash should be equal for semantically equivalent code with different comments"
-    
-    assert get_code_hash(code_snippet_batch_1_v1) != get_code_hash(code_snippet_batch_64), \
-        "Hash should differ for code with different batch sizes"
+    assert get_code_hash(code_snippet_batch_1_v1) == get_code_hash(
+        code_snippet_batch_1_v2
+    ), "Hash should be equal for semantically equivalent code with different comments"
+
+    assert get_code_hash(code_snippet_batch_1_v1) != get_code_hash(
+        code_snippet_batch_64
+    ), "Hash should differ for code with different batch sizes"

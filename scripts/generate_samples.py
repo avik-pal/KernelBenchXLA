@@ -33,7 +33,6 @@ torch.set_printoptions(precision=4, threshold=10)
 
 class GenerationConfig(Config):
     def __init__(self):
-
         self.dataset_src = REQUIRED  # either huggingface or local
 
         # name of dataset name on Hugging Face
@@ -59,9 +58,11 @@ class GenerationConfig(Config):
         self.model_name = None
         self.max_tokens = None
         self.temperature = 0.0
-        
+
         # Reasoning model specific parameters
-        self.is_reasoning_model = False  # set to True for o1, o3, Gemini 2.5 thinking, etc.
+        self.is_reasoning_model = (
+            False  # set to True for o1, o3, Gemini 2.5 thinking, etc.
+        )
         self.reasoning_effort = "low"  # for o1/o3: "low", "medium", "high"
         self.budget_tokens = 0  # for Claude extended thinking mode
 
@@ -78,7 +79,7 @@ class GenerationConfig(Config):
         self.log_prompt = False
 
         self.backend = "cuda"
-        
+
         self.precision = "fp32"
 
     def greedy(self):
@@ -122,9 +123,9 @@ def generate_sample_single(
 
     # Extract problem number from problem name (e.g. "1" from "1_Square_matrix_multiplication_.py")
     problem_number = int(problem_name.split("_")[0])
-    assert (
-        problem_number == work.problem_id
-    ), f"Problem number in filename ({problem_number}) does not match config problem_id ({config.problem_id})"
+    assert problem_number == work.problem_id, (
+        f"Problem number in filename ({problem_number}) does not match config problem_id ({config.problem_id})"
+    )
 
     # Construct Prompt
     if config.backend == "cuda":
@@ -200,7 +201,7 @@ def main(config: GenerationConfig):
     Store generated kernels in the specified run directory
     """
     from src.utils import SERVER_PRESETS
-    
+
     if config.server_type and config.server_type in SERVER_PRESETS:
         preset = SERVER_PRESETS[config.server_type]
         if config.model_name is None or config.model_name == "None":
@@ -209,11 +210,15 @@ def main(config: GenerationConfig):
             config.max_tokens = preset.get("max_tokens", "None")
         if config.temperature is None or config.temperature == "None":
             config.temperature = preset.get("temperature", "None")
-    
+
     # Convert string boolean to actual boolean for reasoning model flag
     if isinstance(config.is_reasoning_model, str):
-        config.is_reasoning_model = config.is_reasoning_model.lower() in ['true', '1', 'yes']
-    
+        config.is_reasoning_model = config.is_reasoning_model.lower() in [
+            "true",
+            "1",
+            "yes",
+        ]
+
     print(f"Starting Batch Generation with config: {config}")
 
     # Dataset Configurations
@@ -228,9 +233,9 @@ def main(config: GenerationConfig):
     if config.subset == (None, None):
         problem_id_range = range(1, num_problems_in_level)
     else:
-        assert (
-            config.subset[0] >= 1 and config.subset[1] <= num_problems_in_level
-        ), f"Subset range {config.subset} out of range for Level {config.level}"
+        assert config.subset[0] >= 1 and config.subset[1] <= num_problems_in_level, (
+            f"Subset range {config.subset} out of range for Level {config.level}"
+        )
         problem_id_range = range(config.subset[0], config.subset[1])
 
     print(
@@ -242,13 +247,15 @@ def main(config: GenerationConfig):
     run_exists = os.path.exists(run_dir)
     if run_exists:
         print(f"\n⚠️  WARNING: Run directory already exists: {run_dir}")
-        print(f"   Existing kernels will be skipped. Use a different run_name for a fresh run.\n")
+        print(
+            f"   Existing kernels will be skipped. Use a different run_name for a fresh run.\n"
+        )
     os.makedirs(run_dir, exist_ok=True)
     pydra.save_yaml(config.to_dict(), os.path.join(run_dir, "generation_config.yaml"))
 
-    assert (
-        config.store_type == "local"
-    ), "supporting local file-system based storage for now"  # database integreation coming soon, need to migrate from CUDA Monkeys code
+    assert config.store_type == "local", (
+        "supporting local file-system based storage for now"
+    )  # database integreation coming soon, need to migrate from CUDA Monkeys code
 
     problems_to_run = []
     total_problems = 0
@@ -264,9 +271,11 @@ def main(config: GenerationConfig):
                 )
             else:
                 already_completed += 1
-    
+
     if already_completed > 0:
-        print(f"📁 Found {already_completed}/{total_problems} kernels already generated. Generating remaining {len(problems_to_run)} kernels.")
+        print(
+            f"📁 Found {already_completed}/{total_problems} kernels already generated. Generating remaining {len(problems_to_run)} kernels."
+        )
 
     # Create inference function with config parameters
     # We provide some presets in utils but you can also pass in your own, see query_server for more details
@@ -297,7 +306,7 @@ def main(config: GenerationConfig):
     num_generated_samples = len(generation_results)
     num_attempted = len(problems_to_run)
     num_failed_problems = num_attempted - num_generated_samples
-    
+
     if num_attempted == 0:
         print(f"\n✅ All {total_problems} kernels already exist in {run_dir}")
         print(f"   Use a different run_name if you want to generate fresh samples.\n")

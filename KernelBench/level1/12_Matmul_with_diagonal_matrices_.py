@@ -1,14 +1,16 @@
 import torch
 import torch.nn as nn
 
+
 class Model(nn.Module):
     """
     Simple model that performs a matrix multiplication of a diagonal matrix with another matrix.
     C = diag(A) * B
     """
+
     def __init__(self):
         super(Model, self).__init__()
-    
+
     def forward(self, A, B):
         """
         Performs the matrix multiplication.
@@ -22,13 +24,16 @@ class Model(nn.Module):
         """
         return torch.diag(A) @ B
 
+
 M = 4096
 N = 4096
+
 
 def get_inputs():
     A = torch.rand(N)
     B = torch.rand(N, M)
     return [A, B]
+
 
 def get_init_inputs():
     return []  # No special initialization inputs needed

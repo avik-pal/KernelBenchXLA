@@ -1,6 +1,7 @@
 import torch
 import torch.nn as nn
 
+
 class Model(nn.Module):
     """
     Performs a transposed 1D convolution operation with asymmetric input and square kernel.
@@ -15,10 +16,28 @@ class Model(nn.Module):
         dilation (int, optional): Spacing between kernel elements. Defaults to 1.
         bias (bool, optional): If `True`, adds a learnable bias to the output. Defaults to `False`.
     """
-    def __init__(self, in_channels: int, out_channels: int, kernel_size: int, stride: int = 1, padding: int = 0, dilation: int = 1, bias: bool = False):
+
+    def __init__(
+        self,
+        in_channels: int,
+        out_channels: int,
+        kernel_size: int,
+        stride: int = 1,
+        padding: int = 0,
+        dilation: int = 1,
+        bias: bool = False,
+    ):
         super(Model, self).__init__()
-        self.conv1d_transpose = nn.ConvTranspose1d(in_channels, out_channels, kernel_size, stride=stride, padding=padding, dilation=dilation, bias=bias)
-        
+        self.conv1d_transpose = nn.ConvTranspose1d(
+            in_channels,
+            out_channels,
+            kernel_size,
+            stride=stride,
+            padding=padding,
+            dilation=dilation,
+            bias=bias,
+        )
+
     def forward(self, x: torch.Tensor) -> torch.Tensor:
         """
         Performs the transposed 1D convolution.
@@ -31,6 +50,7 @@ class Model(nn.Module):
         """
         return self.conv1d_transpose(x)
 
+
 # Test code
 batch_size = 16
 in_channels = 32
@@ -42,9 +62,11 @@ stride = 2
 padding = 1
 dilation = 2
 
+
 def get_inputs():
     x = torch.rand(batch_size, in_channels, length)
     return [x]
+
 
 def get_init_inputs():
     return [in_channels, out_channels, kernel_size, stride, padding, dilation]

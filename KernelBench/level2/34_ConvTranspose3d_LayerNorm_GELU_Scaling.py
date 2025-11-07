@@ -1,13 +1,32 @@
 import torch
 import torch.nn as nn
 
+
 class Model(nn.Module):
     """
     Model that performs a 3D transposed convolution, layer normalization, GELU activation, and scaling.
     """
-    def __init__(self, in_channels, out_channels, kernel_size, stride, padding, bias=True, eps=1e-5, scaling_factor=1.0):
+
+    def __init__(
+        self,
+        in_channels,
+        out_channels,
+        kernel_size,
+        stride,
+        padding,
+        bias=True,
+        eps=1e-5,
+        scaling_factor=1.0,
+    ):
         super(Model, self).__init__()
-        self.conv_transpose = nn.ConvTranspose3d(in_channels, out_channels, kernel_size, stride=stride, padding=padding, bias=bias)
+        self.conv_transpose = nn.ConvTranspose3d(
+            in_channels,
+            out_channels,
+            kernel_size,
+            stride=stride,
+            padding=padding,
+            bias=bias,
+        )
         self.layer_norm = nn.LayerNorm(out_channels, eps=eps)
         self.scaling_factor = scaling_factor
 
@@ -25,6 +44,7 @@ class Model(nn.Module):
         x = x * self.scaling_factor
         return x
 
+
 batch_size = 32
 in_channels = 32
 out_channels = 64
@@ -36,8 +56,19 @@ bias = True
 eps = 1e-5
 scaling_factor = 1.0
 
+
 def get_inputs():
     return [torch.rand(batch_size, in_channels, D, H, W)]
 
+
 def get_init_inputs():
-    return [in_channels, out_channels, kernel_size, stride, padding, bias, eps, scaling_factor]
+    return [
+        in_channels,
+        out_channels,
+        kernel_size,
+        stride,
+        padding,
+        bias,
+        eps,
+        scaling_factor,
+    ]

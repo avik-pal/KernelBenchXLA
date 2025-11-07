@@ -1,10 +1,12 @@
 import torch
 import torch.nn as nn
 
+
 class Model(nn.Module):
     """
     A model that performs a GEMM, BiasAdd, Hardtanh, Mish, and GroupNorm operations in sequence.
     """
+
     def __init__(self, in_features, out_features, bias_shape, num_groups):
         super(Model, self).__init__()
         self.gemm = nn.Linear(in_features, out_features)
@@ -34,8 +36,10 @@ out_features = 8192
 bias_shape = (out_features,)
 num_groups = 256
 
+
 def get_inputs():
     return [torch.rand(batch_size, in_features)]
+
 
 def get_init_inputs():
     return [in_features, out_features, bias_shape, num_groups]

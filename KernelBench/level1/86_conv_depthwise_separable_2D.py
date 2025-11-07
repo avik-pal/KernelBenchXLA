@@ -1,6 +1,7 @@
 import torch
 import torch.nn as nn
 
+
 class Model(nn.Module):
     """
     Performs a depthwise-separable 2D convolution operation.
@@ -14,11 +15,30 @@ class Model(nn.Module):
         dilation (int, optional): Spacing between kernel elements. Defaults to 1.
         bias (bool, optional): If `True`, adds a learnable bias to the output. Defaults to `False`.
     """
-    def __init__(self, in_channels: int, out_channels: int, kernel_size: int, stride: int = 1, padding: int = 0, dilation: int = 1, bias: bool = False):
+
+    def __init__(
+        self,
+        in_channels: int,
+        out_channels: int,
+        kernel_size: int,
+        stride: int = 1,
+        padding: int = 0,
+        dilation: int = 1,
+        bias: bool = False,
+    ):
         super(Model, self).__init__()
-        self.depthwise = nn.Conv2d(in_channels, in_channels, kernel_size, stride=stride, padding=padding, dilation=dilation, groups=in_channels, bias=bias)
+        self.depthwise = nn.Conv2d(
+            in_channels,
+            in_channels,
+            kernel_size,
+            stride=stride,
+            padding=padding,
+            dilation=dilation,
+            groups=in_channels,
+            bias=bias,
+        )
         self.pointwise = nn.Conv2d(in_channels, out_channels, kernel_size=1, bias=bias)
-        
+
     def forward(self, x: torch.Tensor) -> torch.Tensor:
         """
         Performs the depthwise-separable 2D convolution.
@@ -33,6 +53,7 @@ class Model(nn.Module):
         x = self.pointwise(x)
         return x
 
+
 # Test code
 batch_size = 16
 in_channels = 64
@@ -44,9 +65,11 @@ stride = 1
 padding = 1
 dilation = 1
 
+
 def get_inputs():
     x = torch.rand(batch_size, in_channels, height, width)
     return [x]
+
 
 def get_init_inputs():
     return [in_channels, out_channels, kernel_size, stride, padding, dilation]

@@ -17,7 +17,6 @@ Code modified from here
 https://github.com/albanie/collaborative-experts/blob/master/model/net_vlad.py
 """
 
-
 import math
 import torch
 import torch.nn as nn
@@ -33,7 +32,7 @@ class Model(nn.Module):
         self.cluster_size = cluster_size
         self.ghost_clusters = ghost_clusters
 
-        init_sc = (1 / math.sqrt(feature_size))
+        init_sc = 1 / math.sqrt(feature_size)
         clusters = cluster_size + ghost_clusters
 
         # The `clusters` weights are the `(w,b)` in the paper
@@ -65,7 +64,7 @@ class Model(nn.Module):
 
         assignment = F.softmax(assignment, dim=1)  # BN x (K+G) -> BN x (K+G)
         # remove ghost assigments
-        assignment = assignment[:, :self.cluster_size]
+        assignment = assignment[:, : self.cluster_size]
         assignment = assignment.view(-1, max_sample, self.cluster_size)  # -> B x N x K
         a_sum = th.sum(assignment, dim=1, keepdim=True)  # B x N x K -> B x 1 x K
         a = a_sum * self.clusters2
@@ -85,14 +84,17 @@ class Model(nn.Module):
         vlad = F.normalize(vlad)
         return vlad  # B x DK
 
+
 batch_size = 2048
 num_features = 100
 num_clusters = 32
 feature_size = 512
 ghost_clusters = 16
 
+
 def get_inputs():
-  return [torch.rand(batch_size, num_features, feature_size)]
+    return [torch.rand(batch_size, num_features, feature_size)]
+
 
 def get_init_inputs():
-  return [num_clusters, feature_size, ghost_clusters]
+    return [num_clusters, feature_size, ghost_clusters]

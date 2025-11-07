@@ -1,10 +1,12 @@
 import torch
 import torch.nn as nn
 
+
 class Model(nn.Module):
     """
     Model implementing the pattern "Gemm_Sigmoid_Scaling_ResidualAdd".
     """
+
     def __init__(self, input_size, hidden_size, scaling_factor):
         super(Model, self).__init__()
         self.gemm = nn.Linear(input_size, hidden_size)
@@ -27,13 +29,16 @@ class Model(nn.Module):
         x = x + original_x
         return x
 
+
 batch_size = 1024
 input_size = 8192
 hidden_size = 8192
 scaling_factor = 2.0
 
+
 def get_inputs():
     return [torch.rand(batch_size, input_size)]
+
 
 def get_init_inputs():
     return [input_size, hidden_size, scaling_factor]

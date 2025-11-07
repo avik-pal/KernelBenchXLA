@@ -1,6 +1,7 @@
 import torch
 import torch.nn as nn
 
+
 class Model(nn.Module):
     """
     A model that performs an exclusive cumulative sum (does not include the current element).
@@ -14,15 +15,21 @@ class Model(nn.Module):
         self.dim = dim
 
     def forward(self, x):
-        exclusive_cumsum = torch.cat((torch.zeros_like(x.select(self.dim, 0).unsqueeze(self.dim)), x), dim=self.dim)[:-1]
+        exclusive_cumsum = torch.cat(
+            (torch.zeros_like(x.select(self.dim, 0).unsqueeze(self.dim)), x),
+            dim=self.dim,
+        )[:-1]
         return torch.cumsum(exclusive_cumsum, dim=self.dim)
+
 
 batch_size = 32768
 input_shape = (32768,)
 dim = 1
 
+
 def get_inputs():
     return [torch.rand(batch_size, *input_shape)]
+
 
 def get_init_inputs():
     return [dim]

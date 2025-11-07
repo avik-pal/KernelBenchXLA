@@ -2,6 +2,7 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 
+
 class Model(nn.Module):
     def __init__(self, num_classes=1000):
         """
@@ -10,7 +11,7 @@ class Model(nn.Module):
         :param num_classes: The number of output classes. Default is 1000.
         """
         super(Model, self).__init__()
-        
+
         def _make_divisible(v, divisor, min_value=None):
             """
             This function ensures that the number of channels is divisible by the divisor.
@@ -37,15 +38,25 @@ class Model(nn.Module):
                 layers.append(nn.BatchNorm2d(hidden_dim))
                 layers.append(nn.ReLU6(inplace=True))
 
-            layers.extend([
-                # Depthwise convolution
-                nn.Conv2d(hidden_dim, hidden_dim, 3, stride, 1, groups=hidden_dim, bias=False),
-                nn.BatchNorm2d(hidden_dim),
-                nn.ReLU6(inplace=True),
-                # Pointwise linear convolution
-                nn.Conv2d(hidden_dim, oup, 1, 1, 0, bias=False),
-                nn.BatchNorm2d(oup),
-            ])
+            layers.extend(
+                [
+                    # Depthwise convolution
+                    nn.Conv2d(
+                        hidden_dim,
+                        hidden_dim,
+                        3,
+                        stride,
+                        1,
+                        groups=hidden_dim,
+                        bias=False,
+                    ),
+                    nn.BatchNorm2d(hidden_dim),
+                    nn.ReLU6(inplace=True),
+                    # Pointwise linear convolution
+                    nn.Conv2d(hidden_dim, oup, 1, 1, 0, bias=False),
+                    nn.BatchNorm2d(oup),
+                ]
+            )
 
             if use_res_connect:
                 return nn.Sequential(*layers), True
@@ -67,16 +78,22 @@ class Model(nn.Module):
         ]
 
         # Building first layer
-        features = [nn.Conv2d(3, input_channel, 3, 2, 1, bias=False),
-                    nn.BatchNorm2d(input_channel),
-                    nn.ReLU6(inplace=True)]
+        features = [
+            nn.Conv2d(3, input_channel, 3, 2, 1, bias=False),
+            nn.BatchNorm2d(input_channel),
+            nn.ReLU6(inplace=True),
+        ]
 
         # Building inverted residual blocks
         for t, c, n, s in inverted_residual_setting:
             output_channel = _make_divisible(c, 8)
             for i in range(n):
                 stride = s if i == 0 else 1
-                features.append(_inverted_residual_block(input_channel, output_channel, stride, expand_ratio=t)[0])
+                features.append(
+                    _inverted_residual_block(
+                        input_channel, output_channel, stride, expand_ratio=t
+                    )[0]
+                )
                 input_channel = output_channel
 
         # Building last several layers
@@ -98,7 +115,7 @@ class Model(nn.Module):
         # Weight initialization
         for m in self.modules():
             if isinstance(m, nn.Conv2d):
-                nn.init.kaiming_normal_(m.weight, mode='fan_out')
+                nn.init.kaiming_normal_(m.weight, mode="fan_out")
                 if m.bias is not None:
                     nn.init.zeros_(m.bias)
             elif isinstance(m, nn.BatchNorm2d):
@@ -120,12 +137,15 @@ class Model(nn.Module):
         x = self.classifier(x)
         return x
 
+
 # Test code
 batch_size = 10
 num_classes = 1000
 
+
 def get_inputs():
     return [torch.rand(batch_size, 3, 224, 224)]
+
 
 def get_init_inputs():
     return [num_classes]

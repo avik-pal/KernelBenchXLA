@@ -1,11 +1,15 @@
 import torch
 import torch.nn as nn
 
+
 class Model(nn.Module):
     """
     A model that performs a matrix multiplication, group normalization, leaky ReLU activation, and element-wise sum.
     """
-    def __init__(self, input_size, hidden_size, num_groups, eps=1e-5, negative_slope=0.01):
+
+    def __init__(
+        self, input_size, hidden_size, num_groups, eps=1e-5, negative_slope=0.01
+    ):
         super(Model, self).__init__()
         self.fc = nn.Linear(input_size, hidden_size)
         self.gn = nn.GroupNorm(num_groups=num_groups, num_channels=hidden_size, eps=eps)
@@ -33,8 +37,10 @@ input_size = 8192
 hidden_size = 8192
 num_groups = 512
 
+
 def get_inputs():
     return [torch.rand(batch_size, input_size)]
+
 
 def get_init_inputs():
     return [input_size, hidden_size, num_groups]

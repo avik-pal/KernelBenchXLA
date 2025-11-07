@@ -1,10 +1,12 @@
 import torch
 import torch.nn as nn
 
+
 class Model(nn.Module):
     """
     Simple model that finds the index of the minimum value along a specified dimension.
     """
+
     def __init__(self, dim: int):
         """
         Initializes the model with the dimension to perform argmin on.
@@ -27,14 +29,17 @@ class Model(nn.Module):
         """
         return torch.argmin(x, dim=self.dim)
 
+
 batch_size = 128
 dim1 = 4096
 dim2 = 4095
 dim = 1
 
+
 def get_inputs():
     x = torch.rand(batch_size, dim1, dim2)
     return [x]
+
 
 def get_init_inputs():
     return [dim]

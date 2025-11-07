@@ -70,6 +70,7 @@ def set_seed(seed: int):
     # NOTE: this only sets on current cuda device
     torch.cuda.manual_seed(seed)
 
+
 def get_torch_dtype_from_string(precision: str) -> torch.dtype:
     """
     Get the torch dtype for specific precision
@@ -80,13 +81,14 @@ def get_torch_dtype_from_string(precision: str) -> torch.dtype:
         return torch.float16
     elif precision == "bf16":
         return torch.bfloat16
-    else: # future, FP8, FP4, etc. support?
+    else:  # future, FP8, FP4, etc. support?
         raise ValueError(f"Invalid precision not supported: {precision}")
+
 
 def get_tolerance_for_precision(precision: str | torch.dtype) -> float:
     """
     Get the tolerance from a string representing the percision.
-    These tolerances are inspired by torchbench (PyTorch Benchmarking Suite): 
+    These tolerances are inspired by torchbench (PyTorch Benchmarking Suite):
     Reference:
     https://github.com/pytorch/benchmark/blob/cfd835c35d04513ced9a59bd074eeb21dc8187d7/torchbenchmark/util/env_check.py#L519
     """
@@ -96,14 +98,16 @@ def get_tolerance_for_precision(precision: str | torch.dtype) -> float:
     PRECISION_TOLERANCES = {
         # By default for fp32, 1e-4 is used according to torchbench.
         torch.float32: 1e-4,
-        # torchbench states for bf16 and fp16, use 1e-3 as tolerance and 1e-2 if it's too strict. 
+        # torchbench states for bf16 and fp16, use 1e-3 as tolerance and 1e-2 if it's too strict.
         # @todo: Let user configure own tolerance as an option
-        torch.float16: 1e-2, 
+        torch.float16: 1e-2,
         torch.bfloat16: 1e-2,
     }
-    assert precision in PRECISION_TOLERANCES, f"Invalid precision not supported: {precision}"
+    assert precision in PRECISION_TOLERANCES, (
+        f"Invalid precision not supported: {precision}"
+    )
     return PRECISION_TOLERANCES[precision]
-    
+
 
 class KernelExecResult(BaseModel):
     """
@@ -188,7 +192,7 @@ def load_custom_model(
         context["BUILD_DIRECTORY"] = build_directory
         # Add import at the start of the source code
         model_custom_src = (
-            "import os\n" f"os.environ['TORCH_EXTENSIONS_DIR'] = '{build_directory}'\n"
+            f"import os\nos.environ['TORCH_EXTENSIONS_DIR'] = '{build_directory}'\n"
         ) + model_custom_src
 
     try:
@@ -334,7 +338,7 @@ def build_compile_cache_with_capturing(
     if build_dir:
         # Add import at the start of the source code
         custom_model_src = (
-            "import os\n" f"os.environ['TORCH_EXTENSIONS_DIR'] = '{build_dir}'\n"
+            f"import os\nos.environ['TORCH_EXTENSIONS_DIR'] = '{build_dir}'\n"
         ) + custom_model_src
 
     kernel_hash = hash(custom_model_src)
@@ -366,23 +370,23 @@ def build_compile_cache_with_capturing(
 def _process_input_tensor(input, device, backend="cuda", precision=torch.float32):
     """
     Helper function to move tensors to the correct device and apply backend-specific dtype casting.
-    
+
     Args:
         input: Input tensor or non-tensor value
         device: Target CUDA device
         backend: Backend type (e.g., 'cuda', 'triton', 'cute')
-        precision: torch.dtype 
+        precision: torch.dtype
     Returns:
         Processed tensor on correct device with correct dtype, or original value if not a tensor
     """
 
-    # sometimes things like init inputs are floats (like in the case of labels / targets, classification losses, etc.) 
+    # sometimes things like init inputs are floats (like in the case of labels / targets, classification losses, etc.)
     if not isinstance(input, torch.Tensor):
         return input
-    
+
     # cast to the desired percision dtype for activations
     input_tensor = input.to(dtype=precision)
-    
+
     # Default for all other backends and float types
     return input_tensor.to(device=device)
 
@@ -413,10 +417,12 @@ def eval_kernel_against_ref(
     """
     # TODO: check device is busy
     assert torch.cuda.is_available(), "CUDA is not available, cannot run Eval"
-    
+
     if backend.lower() == "tilelang":
-        assert precision == torch.float16 or precision == torch.bfloat16, "TileLang only supports fp16 or bfloat16"
-    
+        assert precision == torch.float16 or precision == torch.bfloat16, (
+            "TileLang only supports fp16 or bfloat16"
+        )
+
     torch.set_printoptions(
         precision=4,  # Decimal places
         threshold=10,  # Total number of elements before truncating
@@ -426,11 +432,11 @@ def eval_kernel_against_ref(
 
     # set CUDA device
     torch.cuda.set_device(device)
-    
+
     # Backends that use tempfile approach and need CUDA_VISIBLE_DEVICES
     # TileLang, Triton, and CuTe all use tempfile for proper module loading
     uses_tempfile = backend.lower() in ["triton", "tilelang", "cute"]
-    
+
     metadata = {}  # for storing result metadata
     metadata["hardware"] = torch.cuda.get_device_name(device=device)
     metadata["device"] = str(device)  # for debugging
@@ -440,9 +446,9 @@ def eval_kernel_against_ref(
         if isinstance(device, int):
             device_num = device
         elif isinstance(device, torch.device):
-            assert (
-                device.type == "cuda"
-            ), "CUDA is not availible on device, cannot run Eval"
+            assert device.type == "cuda", (
+                "CUDA is not availible on device, cannot run Eval"
+            )
             device_num = device.index
         else:
             raise ValueError(
@@ -460,17 +466,19 @@ def eval_kernel_against_ref(
     )
     set_seed(seed_num)  # set seed for reproducible input
     init_inputs = get_init_inputs()
-    
+
     # Convert inputs to appropriate dtypes for GPU computation
-    init_inputs = [_process_input_tensor(x, device, backend, precision) for x in init_inputs]
-    
+    init_inputs = [
+        _process_input_tensor(x, device, backend, precision) for x in init_inputs
+    ]
+
     with torch.no_grad():
         set_seed(seed_num)  # set seed for reproducible weights
         original_model = Model(*init_inputs)
         assert hasattr(original_model, "forward")
         if verbose:
             print("[Eval] Original Model Loaded")
-    
+
     if verbose:
         print("[Eval] Loading and Compiling New Model with Custom CUDA Kernel")
 
@@ -479,7 +487,7 @@ def eval_kernel_against_ref(
         os.environ["TORCH_USE_CUDA_DSA"] = "1"  # compile with device side assertion
         tempfile = None
         # add hash for later to distinguish between multi-turn kernels
-        
+
         backend_lower = backend.lower()
         if backend_lower in ["triton", "tilelang", "cute"]:
             # Use tempfile approach for triton, tilelang, and cute
@@ -573,8 +581,10 @@ def eval_kernel_against_ref(
                 set_seed(seed_num)
                 inputs = get_inputs()
                 # Convert inputs for performance measurement
-                inputs = [_process_input_tensor(x, device, backend, precision) for x in inputs]
-                
+                inputs = [
+                    _process_input_tensor(x, device, backend, precision) for x in inputs
+                ]
+
                 model_new = custom_model.to(device=device, dtype=precision)
                 torch.cuda.synchronize(device=device)
 
@@ -689,11 +699,11 @@ def run_and_check_correctness(
     get_inputs_fn: callable,
     metadata: dict,
     num_correct_trials: int,
-    verbose: bool =False,
-    seed: int =42,
-    device: Optional[torch.device] =None,
-    backend: str ="cuda",
-    precision: torch.dtype =torch.float32,
+    verbose: bool = False,
+    seed: int = 42,
+    device: Optional[torch.device] = None,
+    backend: str = "cuda",
+    precision: torch.dtype = torch.float32,
 ) -> KernelExecResult:
     """
     run the model and check correctness,
@@ -713,9 +723,7 @@ def run_and_check_correctness(
     ]
 
     with torch.no_grad():
-
         for trial in range(num_correct_trials):
-
             trial_seed = correctness_trial_seeds[trial]
             if verbose:
                 print(f"[Eval] Generating Random Input with seed {trial_seed}")
@@ -723,14 +731,16 @@ def run_and_check_correctness(
             set_seed(trial_seed)
             inputs = get_inputs_fn()
             # Convert inputs to appropriate dtypes for GPU computation
-            inputs = [_process_input_tensor(x, device, backend, precision) for x in inputs]
+            inputs = [
+                _process_input_tensor(x, device, backend, precision) for x in inputs
+            ]
 
             set_seed(trial_seed)
-    
+
             model = original_model_instance.to(device=device, dtype=precision)
 
             set_seed(trial_seed)
-     
+
             model_new = new_model_instance.to(device=device, dtype=precision)
 
             output = model(*inputs)

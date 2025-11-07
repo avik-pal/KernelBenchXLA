@@ -1,0 +1,25 @@
+[project]
+name = "kernelbenchxla"
+version = "0.1.0"
+description = "Add your description here"
+readme = "README.md"
+requires-python = ">=3.12"
+dependencies = [
+    "datasets>=4.4.1",
+    "dotenv>=0.9.9",
+    "einops>=0.8.1",
+    "litellm[proxy]>=1.79.1",
+    "modal>=1.2.1",
+    "ninja>=1.13.0",
+    "numpy>=2.3.4",
+    "nvidia-cutlass-dsl>=4.2.1",
+    "openai>=2.7.1",
+    "packaging>=25.0",
+    "pydra-config>=0.0.17.post1",
+    "pytest>=8.4.2",
+    "tilelang>=0.1.6.post1",
+    "torch==2.5.0",
+    "torch-xla>=2.8.1",
+    "tqdm>=4.67.1",
+    "transformers>=4.57.1",
+]

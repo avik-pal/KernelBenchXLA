@@ -1,10 +1,12 @@
 import torch
 import torch.nn as nn
 
+
 class Model(nn.Module):
     """
     Simple model that performs Batch Normalization.
     """
+
     def __init__(self, num_features: int):
         """
         Initializes the BatchNorm layer.
@@ -27,14 +29,17 @@ class Model(nn.Module):
         """
         return self.bn(x)
 
+
 batch_size = 64
 features = 64
 dim1 = 512
 dim2 = 512
 
+
 def get_inputs():
     x = torch.rand(batch_size, features, dim1, dim2)
     return [x]
+
 
 def get_init_inputs():
     return [features]

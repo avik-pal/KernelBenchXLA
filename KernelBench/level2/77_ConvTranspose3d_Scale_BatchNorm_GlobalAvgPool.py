@@ -1,12 +1,22 @@
 import torch
 import torch.nn as nn
 
+
 class Model(nn.Module):
     """
-    Model that performs a 3D transposed convolution, scales the output, applies batch normalization, 
-    and then performs global average pooling. 
+    Model that performs a 3D transposed convolution, scales the output, applies batch normalization,
+    and then performs global average pooling.
     """
-    def __init__(self, in_channels, out_channels, kernel_size, scale_factor, eps=1e-5, momentum=0.1):
+
+    def __init__(
+        self,
+        in_channels,
+        out_channels,
+        kernel_size,
+        scale_factor,
+        eps=1e-5,
+        momentum=0.1,
+    ):
         super(Model, self).__init__()
         self.conv_transpose = nn.ConvTranspose3d(in_channels, out_channels, kernel_size)
         self.scale_factor = scale_factor
@@ -20,6 +30,7 @@ class Model(nn.Module):
         x = self.global_avg_pool(x)
         return x
 
+
 batch_size = 16
 in_channels = 64
 out_channels = 128
@@ -27,8 +38,10 @@ depth, height, width = 16, 32, 32
 kernel_size = 5
 scale_factor = 2.0
 
+
 def get_inputs():
     return [torch.rand(batch_size, in_channels, depth, height, width)]
+
 
 def get_init_inputs():
     return [in_channels, out_channels, kernel_size, scale_factor]

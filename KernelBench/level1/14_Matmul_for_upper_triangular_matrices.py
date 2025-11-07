@@ -1,13 +1,15 @@
 import torch
 import torch.nn as nn
 
+
 class Model(nn.Module):
     """
     Simple model that performs matrix multiplication (C = A * B) for upper triangular matrices.
     """
+
     def __init__(self):
         super(Model, self).__init__()
-    
+
     def forward(self, A, B):
         """
         Performs matrix multiplication for upper triangular matrices.
@@ -21,7 +23,9 @@ class Model(nn.Module):
         """
         return torch.triu(torch.matmul(A, B))
 
+
 N = 4096
+
 
 def get_inputs():
     """
@@ -33,6 +37,7 @@ def get_inputs():
     A = torch.triu(torch.rand(N, N))
     B = torch.triu(torch.rand(N, N))
     return [A, B]
+
 
 def get_init_inputs():
     """

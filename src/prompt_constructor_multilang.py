@@ -58,9 +58,9 @@ def prompt_generate_custom_triton(
 ) -> str:
     prompt = TRITON_PROBLEM_STATEMENT
 
-    assert (
-        "@triton.jit" in example_new_arch_src
-    ), "Example new arch must contain Triton kernel"
+    assert "@triton.jit" in example_new_arch_src, (
+        "Example new arch must contain Triton kernel"
+    )
 
     if example_arch_src != "" and example_new_arch_src != "":
         prompt += f"""
@@ -90,7 +90,9 @@ def prompt_generate_custom_triton_fewshot_and_template(
     raise NotImplementedError("This function has not been implemented yet")
 
 
-def prompt_generate_ex_with_CoT_template_triton(ref_arch_src: str, cot_example: str) -> str:
+def prompt_generate_ex_with_CoT_template_triton(
+    ref_arch_src: str, cot_example: str
+) -> str:
     raise NotImplementedError("This function has not been implemented yet")
 
 
@@ -496,19 +498,20 @@ def prompt_fix_correctness_cute(ref_arch_src, custom_kernel, metadata):
 # Unified API
 ################################################################################
 
+
 def get_prompt_for_backend(ref_arch_src: str, backend: str = "triton") -> str:
     """
     Unified API to get prompt for any supported backend
-    
+
     Args:
         ref_arch_src: Reference architecture source code
         backend: One of 'triton', 'tilelang', 'cute'
-    
+
     Returns:
         Prompt string for the specified backend
     """
     backend_lower = backend.lower()
-    
+
     if backend_lower == "triton":
         return prompt_generate_custom_triton_from_prompt_template(ref_arch_src)
     elif backend_lower == "tilelang":
@@ -525,19 +528,22 @@ def get_prompt_for_backend(ref_arch_src: str, backend: str = "triton") -> str:
 # Main (for testing)
 ################################################################################
 
+
 def main():
     gpu_name = "L40S"
     backend = "triton"  # Change this to test different backends
 
     ref_arch_src = read_file(os.path.join(KERNEL_BENCH_PATH, f"level1/19_ReLU.py"))
     assert len(ref_arch_src) > 0, "ref_arch_src is empty"
-    
+
     prompt = get_prompt_for_backend(ref_arch_src, backend)
-    print(f"\n{'='*80}\n{backend.upper()} PROMPT:\n{'='*80}\n")
+    print(f"\n{'=' * 80}\n{backend.upper()} PROMPT:\n{'=' * 80}\n")
     print(prompt)
-    
+
     # Write prompt to temp file
-    temp_file_path = os.path.join(REPO_TOP_PATH, "scratch", f"prompt_{backend}_draft.txt")
+    temp_file_path = os.path.join(
+        REPO_TOP_PATH, "scratch", f"prompt_{backend}_draft.txt"
+    )
     os.makedirs(os.path.dirname(temp_file_path), exist_ok=True)
     with open(temp_file_path, "w") as f:
         f.write(prompt)
@@ -546,6 +552,3 @@ def main():
 
 if __name__ == "__main__":
     main()
-
-
-

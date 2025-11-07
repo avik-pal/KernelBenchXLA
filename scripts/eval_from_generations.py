@@ -53,7 +53,14 @@ torch.set_printoptions(precision=4, threshold=10)
 
 # Modal Infrastructure Setup
 app = modal.App("eval_from_generations_modal")
-gpu_arch_mapping = {"L40S": ["Ada"], "H100": ["Hopper"], "A100": ["Ampere"], "L4": ["Ada"], "T4": ["Turing"], "A10G": ["Ampere"]}
+gpu_arch_mapping = {
+    "L40S": ["Ada"],
+    "H100": ["Hopper"],
+    "A100": ["Ampere"],
+    "L4": ["Ada"],
+    "T4": ["Turing"],
+    "A10G": ["Ampere"],
+}
 
 cuda_version = "12.4.0"  # should be no greater than host CUDA version
 flavor = "devel"  #  includes full CUDA toolkit
@@ -62,11 +69,7 @@ tag = f"{cuda_version}-{flavor}-{operating_sys}"
 
 image = (
     modal.Image.from_registry(f"nvidia/cuda:{tag}", add_python="3.10")
-    .apt_install("git",
-                "gcc-10",
-                "g++-10",
-                "clang"
-                )
+    .apt_install("git", "gcc-10", "g++-10", "clang")
     .pip_install(
         "anthropic",
         "numpy",
@@ -84,17 +87,13 @@ image = (
         "utils",
         "python-dotenv",
     )
-    .add_local_dir(
-        KERNEL_BENCH_PATH,
-        remote_path="/root/KernelBench"
-    )
+    .add_local_dir(KERNEL_BENCH_PATH, remote_path="/root/KernelBench")
     .add_local_python_source("src")
 )
 
 
 class EvalConfig(Config):
     def __init__(self):
-
         self.run_name = REQUIRED  # name of the run to evaluate
 
         self.dataset_src = REQUIRED  # either huggingface or local
@@ -145,10 +144,10 @@ class EvalConfig(Config):
 
         # Backend to use for kernel implementation (cuda or triton)
         self.backend = "cuda"
-        
+
         # Precision for computation: "fp32", "fp16", "bf16"
         self.precision = "fp32"
-        
+
         # Number of samples per problem to evaluate for pass@k analysis
         self.num_samples_per_problem = 1  # Default to 1 sample per problem
 
@@ -171,17 +170,16 @@ class WorkArgs:
 # Retries are configured at the class level to handle GPU attachment failures
 # @modal.concurrent: Each container handles exactly ONE evaluation at a time - prevents memory leaks
 @app.cls(
-    image=image, 
+    image=image,
     gpu="A10G",
     retries=modal.Retries(
         max_retries=3,
         backoff_coefficient=2.0,
         initial_delay=1.0,
-    )
+    ),
 )
 @modal.concurrent(max_inputs=1)  # One input per container - prevents GPU memory leaks
 class ModalEvaluator:
-    
     @modal.method()
     def evaluate_single_sample_modal(
         self,
@@ -202,11 +200,11 @@ class ModalEvaluator:
         from src.utils import set_gpu_arch
         import torch
         import time
-        
+
         max_wait_time = 30
         start_time = time.time()
         gpu_available = False
-        
+
         while time.time() - start_time < max_wait_time:
             if torch.cuda.is_available():
                 gpu_available = True
@@ -214,14 +212,14 @@ class ModalEvaluator:
             # Progressive backoff: 0.5s, 1s, 2s, 4s, 8s...
             wait_time = min(0.5 * (2 ** int((time.time() - start_time) / 2)), 8.0)
             time.sleep(wait_time)
-        
+
         if not gpu_available:
             raise RuntimeError(
                 f"GPU not attached to container after {max_wait_time}s - Modal will retry with new container"
             )
-        
+
         set_gpu_arch(gpu_arch)
-        
+
         result = eval_kernel_against_ref(
             original_model_src=ref_arch_src,
             custom_model_src=kernel_src,
@@ -234,10 +232,10 @@ class ModalEvaluator:
             backend=backend,
             precision=get_torch_dtype_from_string(precision),
         )
-        
+
         # Force cleanup and exit to prevent container reuse and memory leaks
         torch.cuda.empty_cache()
-        
+
         return result  # Never reached, but needed for type checking
 
 
@@ -267,9 +265,9 @@ def fetch_ref_arch_from_problem_id(
     # verify
     # Extract problem number from problem name (e.g. "1" from "1_Square_matrix_multiplication_.py")
     problem_number = int(problem_name.split("_")[0])
-    assert (
-        problem_number == problem_id
-    ), f"Problem number in filename ({problem_number}) does not match config problem_id ({problem_id})"
+    assert problem_number == problem_id, (
+        f"Problem number in filename ({problem_number}) does not match config problem_id ({problem_id})"
+    )
 
     return ref_arch_src
 
@@ -310,9 +308,9 @@ def evaluate_single_sample(
     # Add database support in the future
     kernel_src = fetch_kernel_from_disk(run_dir, configs.level, problem_id, sample_id)
 
-    assert (
-        kernel_src is not None
-    ), f"Kernel not found for problem {problem_id} sample {sample_id}"
+    assert kernel_src is not None, (
+        f"Kernel not found for problem {problem_id} sample {sample_id}"
+    )
 
     build_dir = os.path.join(
         configs.kernel_eval_build_dir, configs.run_name, f"{problem_id}", f"{sample_id}"
@@ -373,7 +371,7 @@ def evaluate_single_sample_modal_direct(
     Evaluate a single sample using Modal
     """
     gpu_arch = gpu_arch_mapping.get(gpu, ["Ada"])
-    
+
     try:
         evaluator = ModalEvaluator()
         eval_result = evaluator.evaluate_single_sample_modal.remote(
@@ -387,7 +385,9 @@ def evaluate_single_sample_modal_direct(
         )
         return eval_result
     except Exception as e:
-        print(f"[ERROR] Modal evaluation failed for problem {problem_id} sample {sample_id}: {e}")
+        print(
+            f"[ERROR] Modal evaluation failed for problem {problem_id} sample {sample_id}: {e}"
+        )
         return None
 
 
@@ -445,46 +445,60 @@ def batch_eval_modal(
     eval_file_path: str,
 ):
     print(f"[Modal] Starting batch evaluation on {config.gpu} GPUs")
-    print(f"[Modal] Processing {len(total_work)} samples in parallel batches of {config.num_gpu_devices}")
-    
+    print(
+        f"[Modal] Processing {len(total_work)} samples in parallel batches of {config.num_gpu_devices}"
+    )
+
     with app.run():
         with tqdm(total=len(total_work), desc="Modal Evaluation Progress") as pbar:
             batch_size = config.num_gpu_devices
-            
+
             while len(total_work) > 0:
                 curr_work_batch = total_work[:batch_size]
                 total_work = total_work[batch_size:]
-                
-                print(f"\n[Modal Batch] Processing {len(curr_work_batch)} samples; {len(total_work)} remaining")
-                
+
+                print(
+                    f"\n[Modal Batch] Processing {len(curr_work_batch)} samples; {len(total_work)} remaining"
+                )
+
                 start_time = time.time()
-                
+
                 # Prepare work items - fetch all data first
                 work_items = []
                 for problem_id, sample_id in curr_work_batch:
                     ref_arch_src = fetch_ref_arch_from_problem_id(
                         curr_level_dataset, problem_id, config.dataset_src
                     )
-                    kernel_src = fetch_kernel_from_disk(run_dir, config.level, problem_id, sample_id)
-                    
+                    kernel_src = fetch_kernel_from_disk(
+                        run_dir, config.level, problem_id, sample_id
+                    )
+
                     if kernel_src is None:
-                        print(f"[WARNING] Kernel not found for problem {problem_id} sample {sample_id}")
+                        print(
+                            f"[WARNING] Kernel not found for problem {problem_id} sample {sample_id}"
+                        )
                         work_items.append(None)
                     else:
-                        work_items.append({
-                            'problem_id': problem_id,
-                            'sample_id': sample_id,
-                            'ref_arch_src': ref_arch_src,
-                            'kernel_src': kernel_src,
-                        })
-                
+                        work_items.append(
+                            {
+                                "problem_id": problem_id,
+                                "sample_id": sample_id,
+                                "ref_arch_src": ref_arch_src,
+                                "kernel_src": kernel_src,
+                            }
+                        )
+
                 # Submit all evaluations in parallel using Modal
                 gpu_arch = gpu_arch_mapping.get(config.gpu, ["Ada"])
-                
+
                 # Override GPU if different from default in decorator
                 # .with_options() overrides the decorator's parameters
-                evaluator_cls = ModalEvaluator.with_options(gpu=config.gpu) if config.gpu != "A10G" else ModalEvaluator
-                
+                evaluator_cls = (
+                    ModalEvaluator.with_options(gpu=config.gpu)
+                    if config.gpu != "A10G"
+                    else ModalEvaluator
+                )
+
                 # Spawn all tasks in parallel
                 # Each spawn creates a NEW container instance with a GPU
                 futures = []
@@ -493,8 +507,8 @@ def batch_eval_modal(
                         futures.append(None)
                     else:
                         future = evaluator_cls().evaluate_single_sample_modal.spawn(
-                            ref_arch_src=item['ref_arch_src'],
-                            kernel_src=item['kernel_src'],
+                            ref_arch_src=item["ref_arch_src"],
+                            kernel_src=item["kernel_src"],
                             gpu_arch=gpu_arch,
                             num_correct_trials=config.num_correct_trials,
                             num_perf_trials=config.num_perf_trials,
@@ -504,12 +518,12 @@ def batch_eval_modal(
                             precision=config.precision,
                         )
                         futures.append(future)
-                
+
                 # Collect results from all futures
                 results = []
                 for i, future in enumerate(futures):
                     problem_id, sample_id = curr_work_batch[i]
-                    
+
                     if future is None:
                         results.append((problem_id, sample_id, None))
                     else:
@@ -519,30 +533,45 @@ def batch_eval_modal(
                         except Exception as e:
                             error_msg = str(e)
                             # Check if it's a GPU attachment failure that exhausted retries
-                            if "GPU not attached" in error_msg or "CUDA is not available" in error_msg:
-                                print(f"[ERROR] Modal GPU attachment FAILED after retries for Problem ID: {problem_id}, Sample ID: {sample_id}")
-                                print(f"        This is a Modal infrastructure issue. Sample will be skipped.")
+                            if (
+                                "GPU not attached" in error_msg
+                                or "CUDA is not available" in error_msg
+                            ):
+                                print(
+                                    f"[ERROR] Modal GPU attachment FAILED after retries for Problem ID: {problem_id}, Sample ID: {sample_id}"
+                                )
+                                print(
+                                    f"        This is a Modal infrastructure issue. Sample will be skipped."
+                                )
                             else:
-                                print(f"[ERROR] Modal evaluation FAILED for Problem ID: {problem_id}, Sample ID: {sample_id}: {error_msg}")
+                                print(
+                                    f"[ERROR] Modal evaluation FAILED for Problem ID: {problem_id}, Sample ID: {sample_id}: {error_msg}"
+                                )
                             results.append((problem_id, sample_id, None))
-                
+
                 end_time = time.time()
-                
+
                 # Save results
                 for problem_id, sample_id, result in results:
                     print("-" * 128)
-                    print(f"[Eval Result] Problem ID: {problem_id}, Sample ID: {sample_id}")
+                    print(
+                        f"[Eval Result] Problem ID: {problem_id}, Sample ID: {sample_id}"
+                    )
                     print(result)
-                    
+
                     if result is not None:
-                        print(f"Adding Eval Result to file for problem {problem_id} sample {sample_id}")
+                        print(
+                            f"Adding Eval Result to file for problem {problem_id} sample {sample_id}"
+                        )
                         add_to_eval_results_file(
                             problem_id, sample_id, result, eval_file_path
                         )
-                
+
                 print("-" * 128)
-                print(f"[Modal Batch] Evaluation took {end_time - start_time:.2f} seconds")
-                
+                print(
+                    f"[Modal Batch] Evaluation took {end_time - start_time:.2f} seconds"
+                )
+
                 pbar.update(len(curr_work_batch))
 
 
@@ -558,35 +587,35 @@ def batch_eval(
     We put in time out for each batch, consider trying again with larger time out if it didn't finish building.
     Cache directory is removed if evaluation times out or fails
     """
-    
+
     # Use Modal-based evaluation if eval_mode is "modal"
     if config.eval_mode == "modal":
-        return batch_eval_modal(total_work, config, curr_level_dataset, run_dir, eval_file_path)
-    
+        return batch_eval_modal(
+            total_work, config, curr_level_dataset, run_dir, eval_file_path
+        )
+
     # Original local GPU evaluation
     # construct a list of work args
     batch_size = config.num_gpu_devices
 
     with tqdm(total=len(total_work), desc="Processing batches") as pbar:
-
         while len(total_work) > 0:
             curr_work_batch = total_work[:batch_size]
             total_work = total_work[batch_size:]  # pop the first batch_size elements
             print(
                 f"[Curr Batch] {len(curr_work_batch)} tasks over {config.num_gpu_devices} GPUs; [Total Work left] {len(total_work)}"
             )
-            assert (
-                len(curr_work_batch) <= batch_size
-            ), f"Current batch size {len(curr_work_batch)} is greater than the number of GPUs {batch_size}"
+            assert len(curr_work_batch) <= batch_size, (
+                f"Current batch size {len(curr_work_batch)} is greater than the number of GPUs {batch_size}"
+            )
 
             with mp.Pool(batch_size) as pool:
-
                 work_args = [
                     (
                         WorkArgs(
                             problem_id=p_id,
                             sample_id=s_idx,
-                            device=torch.device(f"cuda:{i%batch_size}"),
+                            device=torch.device(f"cuda:{i % batch_size}"),
                         ),
                         config,
                         curr_level_dataset,
@@ -740,13 +769,15 @@ def main(config: EvalConfig):
     # Check if CUDA is available (only for local mode)
     if config.eval_mode == "local":
         if not torch.cuda.is_available():
-            raise RuntimeError("CUDA device not available. Local evaluation requires GPU.")
-        
+            raise RuntimeError(
+                "CUDA device not available. Local evaluation requires GPU."
+            )
+
         # set GPU arch to configure what target to build for
         set_gpu_arch(config.gpu_arch)
-        assert (
-            config.num_gpu_devices <= torch.cuda.device_count()
-        ), f"Number of GPUs requested ({config.num_gpu_devices}) is greater than the number of available GPUs ({torch.cuda.device_count()})"
+        assert config.num_gpu_devices <= torch.cuda.device_count(), (
+            f"Number of GPUs requested ({config.num_gpu_devices}) is greater than the number of available GPUs ({torch.cuda.device_count()})"
+        )
     else:
         print(f"[Modal] Using Modal for evaluation with GPU: {config.gpu}")
 
@@ -765,9 +796,9 @@ def main(config: EvalConfig):
     if config.subset == (None, None):
         problem_id_range = range(1, num_problems_in_level)
     else:
-        assert (
-            config.subset[0] >= 1 and config.subset[1] <= num_problems_in_level
-        ), f"Subset range {config.subset} out of range for Level {config.level}"
+        assert config.subset[0] >= 1 and config.subset[1] <= num_problems_in_level, (
+            f"Subset range {config.subset} out of range for Level {config.level}"
+        )
         problem_id_range = range(config.subset[0], config.subset[1])
 
     print(

@@ -1,9 +1,10 @@
 import torch
 import torch.nn as nn
 
+
 class Model(nn.Module):
     """
-    Performs a 2D transposed convolution operation with asymmetric input, asymmetric kernel, 
+    Performs a 2D transposed convolution operation with asymmetric input, asymmetric kernel,
     grouped, padded, and dilated.
 
     Args:
@@ -16,10 +17,30 @@ class Model(nn.Module):
         groups (int, optional): Number of blocked connections from input channels to output channels. Defaults to 1.
         bias (bool, optional): If `True`, adds a learnable bias to the output. Defaults to `False`.
     """
-    def __init__(self, in_channels: int, out_channels: int, kernel_size: tuple, stride: tuple = (1, 1), padding: tuple = (0, 0), dilation: tuple = (1, 1), groups: int = 1, bias: bool = False):
+
+    def __init__(
+        self,
+        in_channels: int,
+        out_channels: int,
+        kernel_size: tuple,
+        stride: tuple = (1, 1),
+        padding: tuple = (0, 0),
+        dilation: tuple = (1, 1),
+        groups: int = 1,
+        bias: bool = False,
+    ):
         super(Model, self).__init__()
-        self.conv_transpose2d = nn.ConvTranspose2d(in_channels, out_channels, kernel_size, stride=stride, padding=padding, dilation=dilation, groups=groups, bias=bias)
-        
+        self.conv_transpose2d = nn.ConvTranspose2d(
+            in_channels,
+            out_channels,
+            kernel_size,
+            stride=stride,
+            padding=padding,
+            dilation=dilation,
+            groups=groups,
+            bias=bias,
+        )
+
     def forward(self, x: torch.Tensor) -> torch.Tensor:
         """
         Performs the 2D transposed convolution.
@@ -31,6 +52,7 @@ class Model(nn.Module):
             torch.Tensor: Output tensor of shape (batch_size, out_channels, height_out, width_out).
         """
         return self.conv_transpose2d(x)
+
 
 # Test code
 batch_size = 16
@@ -44,9 +66,11 @@ padding = (1, 2)
 dilation = (2, 1)
 groups = 4
 
+
 def get_inputs():
     x = torch.rand(batch_size, in_channels, height, width)
     return [x]
+
 
 def get_init_inputs():
     return [in_channels, out_channels, kernel_size, stride, padding, dilation, groups]

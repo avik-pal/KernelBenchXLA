@@ -63,18 +63,18 @@ def analyze_greedy_eval(run_name, hardware, baseline, level):
 
     # load json
     eval_file_path = f"runs/{run_name}/eval_results.json"
-    assert os.path.exists(
-        eval_file_path
-    ), f"Eval file does not exist at {eval_file_path}"
+    assert os.path.exists(eval_file_path), (
+        f"Eval file does not exist at {eval_file_path}"
+    )
 
     # Check if pass@k results exist
     pass_at_k_file_path = f"runs/{run_name}/pass_at_k_results.json"
     has_pass_at_k_results = os.path.exists(pass_at_k_file_path)
 
     baseline_file_path = f"results/timing/{hardware}/{baseline}.json"
-    assert os.path.exists(
-        baseline_file_path
-    ), f"Baseline file does not exist at {baseline_file_path}"
+    assert os.path.exists(baseline_file_path), (
+        f"Baseline file does not exist at {baseline_file_path}"
+    )
 
     with open(eval_file_path, "r") as f:
         eval_results = json.load(f)
@@ -123,8 +123,8 @@ def analyze_greedy_eval(run_name, hardware, baseline, level):
     print(f"Functionally correct: {correct_count}")
 
     print(f"\nSuccess rates:")
-    print(f"Compilation rate: {compiled_count/total_count*100:.1f}%")
-    print(f"Correctness rate: {correct_count/total_count*100:.1f}%")
+    print(f"Compilation rate: {compiled_count / total_count * 100:.1f}%")
+    print(f"Correctness rate: {correct_count / total_count * 100:.1f}%")
 
     import numpy as np
 
@@ -143,12 +143,12 @@ def analyze_greedy_eval(run_name, hardware, baseline, level):
     actual_speed = np.array([entry["runtime"] for entry in eval_results.values()])
     n = len(is_correct)
 
-    assert (
-        len(baseline_speed) == n
-    ), "Baseline speedup values do not match the number of eval results"
-    assert (
-        len(actual_speed) == n
-    ), "Actual speedup values do not match the number of eval results"
+    assert len(baseline_speed) == n, (
+        "Baseline speedup values do not match the number of eval results"
+    )
+    assert len(actual_speed) == n, (
+        "Actual speedup values do not match the number of eval results"
+    )
 
     # Calculate the metrics
     gmsr_correct = geometric_mean_speed_ratio_correct_only(

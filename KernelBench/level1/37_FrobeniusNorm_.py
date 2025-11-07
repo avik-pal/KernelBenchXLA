@@ -1,10 +1,12 @@
 import torch
 import torch.nn as nn
 
+
 class Model(nn.Module):
     """
     Simple model that performs Frobenius norm normalization.
     """
+
     def __init__(self):
         """
         Initializes the Frobenius norm normalization layer.
@@ -21,17 +23,20 @@ class Model(nn.Module):
         Returns:
             torch.Tensor: Output tensor with Frobenius norm normalization applied, same shape as input.
         """
-        norm = torch.norm(x, p='fro')
+        norm = torch.norm(x, p="fro")
         return x / norm
+
 
 batch_size = 112
 features = 64
 dim1 = 512
 dim2 = 512
 
+
 def get_inputs():
     x = torch.rand(batch_size, features, dim1, dim2)
     return [x]
+
 
 def get_init_inputs():
     return []

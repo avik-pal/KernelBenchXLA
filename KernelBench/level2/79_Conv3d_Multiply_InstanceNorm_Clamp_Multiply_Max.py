@@ -1,11 +1,21 @@
 import torch
 import torch.nn as nn
 
+
 class Model(nn.Module):
     """
     A 3D convolutional layer followed by multiplication, instance normalization, clamping, multiplication, and a max operation.
     """
-    def __init__(self, in_channels, out_channels, kernel_size, multiplier_shape, clamp_min, clamp_max):
+
+    def __init__(
+        self,
+        in_channels,
+        out_channels,
+        kernel_size,
+        multiplier_shape,
+        clamp_min,
+        clamp_max,
+    ):
         super(Model, self).__init__()
         self.conv = nn.Conv3d(in_channels, out_channels, kernel_size)
         self.multiplier = nn.Parameter(torch.randn(multiplier_shape))
@@ -22,6 +32,7 @@ class Model(nn.Module):
         x = torch.max(x, dim=1)[0]
         return x
 
+
 batch_size = 128
 in_channels = 3
 out_channels = 16
@@ -31,8 +42,17 @@ multiplier_shape = (out_channels, 1, 1, 1)
 clamp_min = -1.0
 clamp_max = 1.0
 
+
 def get_inputs():
     return [torch.rand(batch_size, in_channels, depth, height, width)]
 
+
 def get_init_inputs():
-    return [in_channels, out_channels, kernel_size, multiplier_shape, clamp_min, clamp_max]
+    return [
+        in_channels,
+        out_channels,
+        kernel_size,
+        multiplier_shape,
+        clamp_min,
+        clamp_max,
+    ]

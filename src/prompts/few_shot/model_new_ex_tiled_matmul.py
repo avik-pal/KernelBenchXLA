@@ -112,10 +112,11 @@ tiled_matmul = torch.utils.cpp_extension.load_inline(
     "tiled_matmul",  # Name of the extension
     cpp_sources=cpp_src,  # C++ interface
     cuda_sources=source,  # CUDA source code
-    functions=['tiled_matmul_cuda'],  # Exported functions
-    extra_cuda_cflags=['--ptxas-options=-v'],  # Additional CUDA compilation flags
-    verbose=True              # Enable verbose output during compilation
+    functions=["tiled_matmul_cuda"],  # Exported functions
+    extra_cuda_cflags=["--ptxas-options=-v"],  # Additional CUDA compilation flags
+    verbose=True,  # Enable verbose output during compilation
 )
+
 
 class ModelNew(nn.Module):
     def __init__(self) -> None:

@@ -1,6 +1,7 @@
 import torch
 import torch.nn as nn
 
+
 class Model(nn.Module):
     """
     A simple model that performs a cumulative sum (prefix sum) operation along a specified dimension.
@@ -24,7 +25,7 @@ class Model(nn.Module):
         Forward pass for the Scan model, computing the cumulative sum along the specified dimension.
 
         Args:
-            x (torch.Tensor): Input tensor of shape (batch_size, *input_shape), where `*input_shape` 
+            x (torch.Tensor): Input tensor of shape (batch_size, *input_shape), where `*input_shape`
                               can vary depending on the use case.
 
         Returns:
@@ -32,20 +33,23 @@ class Model(nn.Module):
         """
         return torch.cumsum(x, dim=self.dim)
 
+
 # Define input dimensions and parameters
 batch_size = 32768
 input_shape = (32768,)
 dim = 1
+
 
 def get_inputs():
     """
     Generates random inputs for testing the Scan model.
 
     Returns:
-        list: A list containing a single randomly generated tensor with shape 
+        list: A list containing a single randomly generated tensor with shape
               (batch_size, *input_shape).
     """
     return [torch.rand(batch_size, *input_shape)]
+
 
 def get_init_inputs():
     """

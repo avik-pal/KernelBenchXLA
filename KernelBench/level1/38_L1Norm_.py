@@ -1,10 +1,12 @@
 import torch
 import torch.nn as nn
 
+
 class Model(nn.Module):
     """
     Simple model that performs L1 normalization.
     """
+
     def __init__(self):
         """
         Initializes the L1 normalization layer.
@@ -23,13 +25,16 @@ class Model(nn.Module):
         """
         return x / torch.mean(torch.abs(x), dim=1, keepdim=True)
 
+
 batch_size = 32768
 # choose dim so total <2^31
 dim = 65535
 
+
 def get_inputs():
     x = torch.rand(batch_size, dim)
     return [x]
+
 
 def get_init_inputs():
     return []

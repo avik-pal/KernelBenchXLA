@@ -2,6 +2,7 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 
+
 class Model(nn.Module):
     def __init__(self, num_layers: int, num_input_features: int, growth_rate: int):
         """
@@ -12,7 +13,9 @@ class Model(nn.Module):
         super(Model, self).__init__()
         layers = []
         for i in range(num_layers):
-            layers.append(self._make_layer(num_input_features + i * growth_rate, growth_rate))
+            layers.append(
+                self._make_layer(num_input_features + i * growth_rate, growth_rate)
+            )
         self.layers = nn.ModuleList(layers)
 
     def _make_layer(self, in_features: int, growth_rate: int):
@@ -23,9 +26,9 @@ class Model(nn.Module):
             nn.BatchNorm2d(in_features),
             nn.ReLU(inplace=True),
             nn.Conv2d(in_features, growth_rate, kernel_size=3, padding=1, bias=False),
-            nn.Dropout(0.0)
+            nn.Dropout(0.0),
         )
-    
+
     def forward(self, x):
         """
         :param x: Input tensor of shape (batch_size, num_input_features, height, width)
@@ -37,15 +40,18 @@ class Model(nn.Module):
             features.append(new_feature)
             x = torch.cat(features, 1)  # Concatenate along channel axis
         return x
-    
+
+
 batch_size = 10
 num_layers = 6
 num_input_features = 32
 growth_rate = 32
 height, width = 224, 224
 
+
 def get_inputs():
     return [torch.rand(batch_size, num_input_features, height, width)]
 
+
 def get_init_inputs():
-    return [num_layers, num_input_features , growth_rate]
+    return [num_layers, num_input_features, growth_rate]

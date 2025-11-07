@@ -8,15 +8,16 @@ from src.eval import (
     fetch_ref_arch_from_problem_id,
 )
 
+
 def measure_program_time(
-        ref_arch_name: str,
-        ref_arch_src: str, 
-        num_trials: int = 100,
-        use_torch_compile: bool = False,
-        torch_compile_backend: str="inductor", 
-        torch_compile_options: str="default",
-        device: torch.device="cuda:0",
-        verbose: bool = False,
+    ref_arch_name: str,
+    ref_arch_src: str,
+    num_trials: int = 100,
+    use_torch_compile: bool = False,
+    torch_compile_backend: str = "inductor",
+    torch_compile_options: str = "default",
+    device: torch.device = "cuda:0",
+    verbose: bool = False,
 ) -> dict:
     """
     Measure the time of a KernelBench reference architecture
@@ -43,13 +44,17 @@ def measure_program_time(
 
             # Initialize PyTorch model, use this for eager mode execution
             model = Model(*init_inputs)
-            
+
             if use_torch_compile:
-                print(f"Using torch.compile to compile model {ref_arch_name} with {torch_compile_backend} backend and {torch_compile_options} mode")
-                model = torch.compile(model, backend=torch_compile_backend, mode=torch_compile_options)
+                print(
+                    f"Using torch.compile to compile model {ref_arch_name} with {torch_compile_backend} backend and {torch_compile_options} mode"
+                )
+                model = torch.compile(
+                    model, backend=torch_compile_backend, mode=torch_compile_options
+                )
             else:
                 print(f"Using PyTorch Eager Execution on {ref_arch_name}")
-            
+
             model = model.cuda(device=device)
             torch.cuda.synchronize(device=device)
             elapsed_times = time_execution_with_cuda_event(
@@ -59,10 +64,11 @@ def measure_program_time(
 
             if verbose:
                 print(f"{ref_arch_name} {runtime_stats}")
-            
+
             return runtime_stats
     except Exception as e:
         print(f"[Eval] Error in Measuring Performance: {e}")
+
 
 if __name__ == "__main__":
     ref_arch_name = "softmax"
