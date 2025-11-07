@@ -12,6 +12,7 @@ from src.utils import read_file
 import os
 import json
 from tqdm import tqdm
+import socket
 
 """
 Generate baseline time for KernelBench
@@ -203,13 +204,65 @@ def test_measure_particular_program(level_num: int, problem_id: int):
     print(f"Execution time for {ref_arch_name}: {exec_stats}")
 
 
+def detect_hardware_name() -> str:
+    """
+    Automatically detect the hardware name based on GPU and system information
+
+    Returns:
+        hardware_name: str, a formatted hardware identifier
+    """
+    gpu_name = "Unknown"
+    hostname = socket.gethostname()
+
+    # Try to detect GPU
+    if torch.cuda.is_available():
+        try:
+            gpu_name = torch.cuda.get_device_name(0)
+            # Clean up GPU name - remove spaces and special characters
+            gpu_name = (
+                gpu_name.replace(" ", "_")
+                .replace("(", "")
+                .replace(")", "")
+                .replace("-", "_")
+            )
+        except Exception as e:
+            print(f"Warning: Could not get GPU name: {e}")
+            gpu_name = "CUDA_Device"
+    else:
+        # Fallback: try nvidia-smi
+        try:
+            import subprocess
+
+            result = subprocess.run(
+                ["nvidia-smi", "--query-gpu=name", "--format=csv,noheader"],
+                capture_output=True,
+                text=True,
+                timeout=5,
+            )
+            if result.returncode == 0:
+                gpu_name = result.stdout.strip().split("\n")[0]
+                gpu_name = (
+                    gpu_name.replace(" ", "_")
+                    .replace("(", "")
+                    .replace(")", "")
+                    .replace("-", "_")
+                )
+        except Exception:
+            pass
+
+    # Create hardware identifier with hostname and GPU
+    hardware_name = f"{gpu_name}_{hostname}"
+
+    return hardware_name
+
+
 if __name__ == "__main__":
     # DEBUG and simple testing
     # test_measure_particular_program(2, 28)
 
-    # Replace this with whatever hardware you are running on
-    # hardware_name = "L40S_matx3"
-    hardware_name = "H100_PCIe_LambdaLabs"
+    # Automatically detect hardware name
+    hardware_name = detect_hardware_name()
+    print(f"Detected hardware: {hardware_name}")
 
     input(
         f"You are about to start recording baseline time for {hardware_name}, press Enter to continue..."
